@@ -1,125 +1,109 @@
-import { useState } from 'react'
-import Sidebar from '../components/Sidebar'
-import Equipamentos from './Equipamentos'
-import OrdensServico from './OrdensServico'
-import Fornecedores from './Fornecedores'
-import Usuarios from './Usuarios'
+import React, { useState } from 'react';
+import Sidebar from '../components/Sidebar';
+import Equipamentos from './Equipamentos';
+import OrdensServico from './OrdensServico';
+import Fornecedores from './Fornecedores';
+import Usuarios from './Usuarios';
+import { jwtDecode } from 'jwt-decode';
 
-const dashboardContainerStyle = {
-  minHeight: '100vh',
-  background: '#f5f5f5',
-  display: 'flex',
-}
+export default function Dashboard() {
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-const headerStyle = {
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  color: 'white',
-  padding: '20px 40px',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-}
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-const titleStyle = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-}
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-const logoutButtonStyle = {
-  background: 'rgba(255, 255, 255, 0.2)',
-  color: 'white',
-  border: '1px solid white',
-  padding: '8px 16px',
-  borderRadius: '4px',
-  cursor: 'pointer',
-  fontSize: '14px',
-  fontWeight: '500',
-}
-
-const contentStyle = {
-  padding: '40px',
-  maxWidth: '1200px',
-  margin: '0 auto',
-}
-
-const cardStyle = {
-  background: 'white',
-  borderRadius: '8px',
-  padding: '20px',
-  marginBottom: '20px',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-}
-
-const cardTitleStyle = {
-  fontSize: '18px',
-  fontWeight: 'bold',
-  marginBottom: '10px',
-  color: '#333',
-}
-
-const permissionStyle = {
-  background: '#e8f4f8',
-  padding: '10px 15px',
-  borderRadius: '4px',
-  fontSize: '14px',
-  color: '#333',
-  marginBottom: '20px',
-}
-
-const mainContentStyle = {
-  marginLeft: '250px',
-  minHeight: '100vh',
-  background: '#f5f5f5',
-  flex: 1,
-}
-
-function Dashboard({ onLogout, userPermission }) {
-  const [currentPage, setCurrentPage] = useState('dashboard')
-  const [loading, setLoading] = useState(false)
-
-  const handleLogout = () => {
-    setLoading(true)
-    setTimeout(() => {
-      onLogout()
-    }, 500)
+  const token = localStorage.getItem('token');
+  let userPermission = 'visualizador';
+  
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userPermission = decoded.permissao || 'visualizador';
+    } catch (err) {
+      console.error('Erro ao decodificar token:', err);
+    }
   }
 
-  const handleNavigate = (page) => {
-    setCurrentPage(page)
-  }
+  const mainStyle = {
+    display: 'flex',
+    flexDirection: isMobile ? 'column' : 'row',
+    minHeight: '100vh',
+    backgroundColor: '#f9fafb'
+  };
 
-  return (
-    <div style={dashboardContainerStyle}>
-      <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
-      <div style={mainContentStyle}>
-        <header style={headerStyle}>
-          <h1 style={titleStyle}>Sistema de Gestão</h1>
-          <button style={logoutButtonStyle} onClick={handleLogout} disabled={loading}>
-            {loading ? 'Saindo...' : 'Sair'}
-          </button>
-        </header>
+  const contentStyle = {
+    flex: 1,
+    overflowY: 'auto',
+    width: isMobile ? '100%' : 'calc(100% - 250px)'
+  };
 
-        {currentPage === 'dashboard' && (
-          <div style={contentStyle}>
-            <div style={permissionStyle}>
-              <strong>Sua Permissão:</strong> {userPermission || 'Não definida'}
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'equipamentos':
+        return <Equipamentos />;
+      case 'ordens-servico':
+        return <OrdensServico />;
+      case 'fornecedores':
+        return <Fornecedores />;
+      case 'usuarios':
+        return <Usuarios />;
+      default:
+        return (
+          <div style={{ padding: isMobile ? '16px' : '20px' }}>
+            <div style={{
+              backgroundColor: '#dbeafe',
+              padding: isMobile ? '16px' : '20px',
+              borderRadius: '8px',
+              marginBottom: '20px'
+            }}>
+              <p style={{ margin: 0, color: '#0369a1', fontSize: isMobile ? '14px' : '16px' }}>
+                Sua Permissão: <strong>{userPermission}</strong>
+              </p>
             </div>
-            <div style={cardStyle}>
-              <h2 style={cardTitleStyle}>Bem-vindo ao Sistema</h2>
-              <p>Este é o dashboard principal do sistema de gestão de clínica de ortopedia.</p>
+            <div style={{
+              backgroundColor: 'white',
+              padding: isMobile ? '16px' : '24px',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+            }}>
+              <h2 style={{ marginTop: 0, fontSize: isMobile ? '20px' : '24px' }}>Bem-vindo ao Sistema</h2>
+              <p style={{ color: '#666', lineHeight: '1.6', fontSize: isMobile ? '14px' : '16px' }}>
+                Este é o dashboard principal do sistema de gestão de clínica de ortopedia. Utilize o menu lateral para navegar entre as diferentes seções do sistema.
+              </p>
+              <div style={{
+                marginTop: '20px',
+                padding: '16px',
+                backgroundColor: '#f3f4f6',
+                borderRadius: '6px',
+                fontSize: isMobile ? '13px' : '14px'
+              }}>
+                <p style={{ margin: '0 0 10px 0', fontWeight: '600' }}>Funcionalidades Disponíveis:</p>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: '#555' }}>
+                  <li>Gestão de Equipamentos</li>
+                  <li>Controle de Ordens de Serviço</li>
+                  <li>Cadastro de Fornecedores</li>
+                  <li>Gerenciamento de Usuários</li>
+                </ul>
+              </div>
             </div>
           </div>
-        )}
+        );
+    }
+  };
 
-        {currentPage === 'equipamentos' && <Equipamentos token={localStorage.getItem('token')} />}
-        {currentPage === 'ordens-servico' && <OrdensServico token={localStorage.getItem('token')} />}
-        {currentPage === 'fornecedores' && <Fornecedores token={localStorage.getItem('token')} />}
-        {currentPage === 'usuarios' && <Usuarios token={localStorage.getItem('token')} />}
+  return (
+    <div style={mainStyle}>
+      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+      <div style={contentStyle}>
+        {renderPage()}
       </div>
     </div>
-  )
+  );
 }
-
-export default Dashboard
-
