@@ -1,167 +1,340 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import { Edit2, Trash2, Plus } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-
-const pageStyle = {
-  padding: '20px',
-}
-
-const titleStyle = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  marginBottom: '20px',
-  color: '#333',
-}
-
-const buttonStyle = {
-  background: '#667eea',
-  color: 'white',
-  border: 'none',
-  padding: '10px 20px',
-  borderRadius: '4px',
-  cursor: 'pointer',
-  fontSize: '14px',
-  marginBottom: '20px',
-}
-
-const tableStyle = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  background: 'white',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  borderRadius: '4px',
-  overflow: 'hidden',
-}
-
-const thStyle = {
-  background: '#f5f5f5',
-  padding: '12px',
-  textAlign: 'left',
-  fontWeight: 'bold',
-  borderBottom: '1px solid #ddd',
-  color: '#333',
-}
-
-const tdStyle = {
-  padding: '12px',
-  borderBottom: '1px solid #ddd',
-  color: '#666',
-}
-
-const badgeStyle = {
-  padding: '4px 8px',
-  borderRadius: '4px',
-  fontSize: '12px',
-  fontWeight: 'bold',
-  display: 'inline-block',
-}
-
-const statusBadgeStyle = (status) => {
-  const colors = {
-    aberta: { background: '#ffc107', color: '#000' },
-    em_andamento: { background: '#17a2b8', color: '#fff' },
-    fechada: { background: '#28a745', color: '#fff' },
-    cancelada: { background: '#dc3545', color: '#fff' },
-  }
-  return { ...badgeStyle, ...colors[status] }
-}
-
-const emptyMessageStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#999',
-  background: 'white',
-  borderRadius: '4px',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-}
-
-const loadingStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#667eea',
-  fontSize: '16px',
-}
-
-function OrdensServico({ token }) {
-  const [ordens, setOrdens] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+export default function OrdensServico() {
+  const [ordens, setOrdens] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({
+    equipamento_id: '',
+    setor: '',
+    descricao_problema: '',
+    tipo_manutencao: 'corretiva',
+    status: 'aberta'
+  });
 
   useEffect(() => {
-    fetchOrdens()
-  }, [])
+    fetchOrdens();
+  }, []);
 
   const fetchOrdens = async () => {
     try {
-      setLoading(true)
-      const response = await fetch(`${API_URL}/ordens-servico`, {
-        method: 'GET',
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ordens-servico`, {
         headers: {
-          'x-access-token': token,
-        },
-      })
-
+          'x-access-token': token
+        }
+      });
       if (response.ok) {
-        const data = await response.json()
-        setOrdens(data)
+        const data = await response.json();
+        setOrdens(data.ordens_servico || []);
       } else {
-        setError('Erro ao carregar ordens de serviço')
+        setError('Erro ao conectar ao servidor');
       }
     } catch (err) {
-      setError('Erro ao conectar ao servidor')
-      console.error(err)
+      setError('Erro ao conectar ao servidor');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const method = editingId ? 'PUT' : 'POST';
+      const url = editingId 
+        ? `${import.meta.env.VITE_API_URL}/ordens-servico/${editingId}`
+        : `${import.meta.env.VITE_API_URL}/ordens-servico`;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-access-token': token
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setShowModal(false);
+        setEditingId(null);
+        setFormData({
+          equipamento_id: '',
+          setor: '',
+          descricao_problema: '',
+          tipo_manutencao: 'corretiva',
+          status: 'aberta'
+        });
+        fetchOrdens();
+      }
+    } catch (err) {
+      console.error('Erro:', err);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'aberta': '#dbeafe',
+      'em_andamento': '#fef3c7',
+      'fechada': '#d1fae5',
+      'cancelada': '#fee2e2'
+    };
+    const textColors = {
+      'aberta': '#0369a1',
+      'em_andamento': '#92400e',
+      'fechada': '#065f46',
+      'cancelada': '#991b1b'
+    };
+    return { bg: colors[status] || '#f3f4f6', text: textColors[status] || '#374151' };
+  };
+
+  if (loading) return <div style={{ padding: '20px' }}>Carregando...</div>;
+  if (error) return <div style={{ padding: '20px', color: 'red' }}>{error}</div>;
 
   return (
-    <div style={pageStyle}>
-      <h1 style={titleStyle}>Ordens de Serviço</h1>
-      <button style={buttonStyle}>+ Nova Ordem de Serviço</button>
+    <div style={{ padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1>Ordens de Serviço</h1>
+        <button
+          onClick={() => {
+            setEditingId(null);
+            setFormData({
+              equipamento_id: '',
+              setor: '',
+              descricao_problema: '',
+              tipo_manutencao: 'corretiva',
+              status: 'aberta'
+            });
+            setShowModal(true);
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            backgroundColor: '#6366f1',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          <Plus size={20} /> Nova Ordem
+        </button>
+      </div>
 
-      {loading && <div style={loadingStyle}>Carregando ordens de serviço...</div>}
-      {error && <div style={{ ...emptyMessageStyle, color: '#dc3545' }}>{error}</div>}
-      {!loading && !error && ordens.length === 0 && (
-        <div style={emptyMessageStyle}>Nenhuma ordem de serviço cadastrada</div>
-      )}
-
-      {!loading && !error && ordens.length > 0 && (
-        <table style={tableStyle}>
+      {ordens.length === 0 ? (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+          Nenhuma ordem de serviço cadastrada
+        </div>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>
-              <th style={thStyle}>ID</th>
-              <th style={thStyle}>Setor</th>
-              <th style={thStyle}>Descrição</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Tipo</th>
-              <th style={thStyle}>Data Abertura</th>
-              <th style={thStyle}>Ações</th>
+            <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Setor</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Descrição</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Tipo</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Status</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Data Abertura</th>
+              <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
             </tr>
           </thead>
           <tbody>
-            {ordens.map((ordem) => (
-              <tr key={ordem.id}>
-                <td style={tdStyle}>{ordem.id}</td>
-                <td style={tdStyle}>{ordem.setor}</td>
-                <td style={tdStyle}>{ordem.descricao_problema?.substring(0, 50)}...</td>
-                <td style={tdStyle}>
-                  <span style={statusBadgeStyle(ordem.status)}>{ordem.status}</span>
-                </td>
-                <td style={tdStyle}>{ordem.tipo_manutencao}</td>
-                <td style={tdStyle}>{ordem.data_abertura}</td>
-                <td style={tdStyle}>
-                  <button style={{ ...buttonStyle, background: '#28a745', marginRight: '5px' }}>Editar</button>
-                  <button style={{ ...buttonStyle, background: '#dc3545' }}>Deletar</button>
-                </td>
-              </tr>
-            ))}
+            {ordens.map((ordem) => {
+              const statusColor = getStatusColor(ordem.status);
+              return (
+                <tr key={ordem.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <td style={{ padding: '12px' }}>{ordem.setor}</td>
+                  <td style={{ padding: '12px' }}>{ordem.descricao_problema.substring(0, 50)}...</td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      padding: '4px 8px',
+                      backgroundColor: ordem.tipo_manutencao === 'corretiva' ? '#dbeafe' : '#d1fae5',
+                      color: ordem.tipo_manutencao === 'corretiva' ? '#0369a1' : '#065f46',
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}>
+                      {ordem.tipo_manutencao}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      padding: '4px 8px',
+                      backgroundColor: statusColor.bg,
+                      color: statusColor.text,
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}>
+                      {ordem.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>{new Date(ordem.data_abertura).toLocaleDateString('pt-BR')}</td>
+                  <td style={{ padding: '12px', textAlign: 'center' }}>
+                    <button
+                      onClick={() => {
+                        setEditingId(ordem.id);
+                        setFormData({
+                          equipamento_id: ordem.equipamento_id,
+                          setor: ordem.setor,
+                          descricao_problema: ordem.descricao_problema,
+                          tipo_manutencao: ordem.tipo_manutencao,
+                          status: ordem.status
+                        });
+                        setShowModal(true);
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        marginRight: '8px',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
+
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '500px',
+            width: '90%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h2>{editingId ? 'Editar Ordem' : 'Nova Ordem de Serviço'}</h2>
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Setor</label>
+                <input
+                  type="text"
+                  value={formData.setor}
+                  onChange={(e) => setFormData({ ...formData, setor: e.target.value })}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Descrição do Problema</label>
+                <textarea
+                  value={formData.descricao_problema}
+                  onChange={(e) => setFormData({ ...formData, descricao_problema: e.target.value })}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box',
+                    minHeight: '100px',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Tipo Manutenção</label>
+                <select
+                  value={formData.tipo_manutencao}
+                  onChange={(e) => setFormData({ ...formData, tipo_manutencao: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="corretiva">Corretiva</option>
+                  <option value="programada">Programada</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="aberta">Aberta</option>
+                  <option value="em_andamento">Em Andamento</option>
+                  <option value="fechada">Fechada</option>
+                  <option value="cancelada">Cancelada</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#e5e7eb',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#6366f1',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {editingId ? 'Atualizar' : 'Criar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
-
-export default OrdensServico
-

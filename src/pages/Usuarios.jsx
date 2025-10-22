@@ -1,163 +1,101 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import { Shield } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-
-const pageStyle = {
-  padding: '20px',
-}
-
-const titleStyle = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  marginBottom: '20px',
-  color: '#333',
-}
-
-const buttonStyle = {
-  background: '#667eea',
-  color: 'white',
-  border: 'none',
-  padding: '10px 20px',
-  borderRadius: '4px',
-  cursor: 'pointer',
-  fontSize: '14px',
-  marginBottom: '20px',
-}
-
-const tableStyle = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  background: 'white',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  borderRadius: '4px',
-  overflow: 'hidden',
-}
-
-const thStyle = {
-  background: '#f5f5f5',
-  padding: '12px',
-  textAlign: 'left',
-  fontWeight: 'bold',
-  borderBottom: '1px solid #ddd',
-  color: '#333',
-}
-
-const tdStyle = {
-  padding: '12px',
-  borderBottom: '1px solid #ddd',
-  color: '#666',
-}
-
-const badgeStyle = {
-  padding: '4px 8px',
-  borderRadius: '4px',
-  fontSize: '12px',
-  fontWeight: 'bold',
-  display: 'inline-block',
-}
-
-const permissionBadgeStyle = (permission) => {
-  const colors = {
-    administrador: { background: '#dc3545', color: '#fff' },
-    patrimonio: { background: '#007bff', color: '#fff' },
-    tecnico: { background: '#28a745', color: '#fff' },
-    visualizador: { background: '#6c757d', color: '#fff' },
-  }
-  return { ...badgeStyle, ...colors[permission] }
-}
-
-const emptyMessageStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#999',
-  background: 'white',
-  borderRadius: '4px',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-}
-
-const loadingStyle = {
-  padding: '40px',
-  textAlign: 'center',
-  color: '#667eea',
-  fontSize: '16px',
-}
-
-function Usuarios({ token }) {
-  const [usuarios, setUsuarios] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+export default function Usuarios() {
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchUsuarios()
-  }, [])
+    fetchUsuarios();
+  }, []);
 
   const fetchUsuarios = async () => {
     try {
-      setLoading(true)
-      const response = await fetch(`${API_URL}/usuarios`, {
-        method: 'GET',
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/usuarios`, {
         headers: {
-          'x-access-token': token,
-        },
-      })
-
+          'x-access-token': token
+        }
+      });
       if (response.ok) {
-        const data = await response.json()
-        setUsuarios(data)
+        const data = await response.json();
+        setUsuarios(data.usuarios || []);
       } else {
-        setError('Erro ao carregar usuários')
+        setError('Erro ao conectar ao servidor');
       }
     } catch (err) {
-      setError('Erro ao conectar ao servidor')
-      console.error(err)
+      setError('Erro ao conectar ao servidor');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const getPermissionColor = (permissao) => {
+    const colors = {
+      'administrador': '#dbeafe',
+      'patrimonio': '#d1fae5',
+      'tecnico': '#fef3c7',
+      'visualizador': '#f3e8ff'
+    };
+    const textColors = {
+      'administrador': '#0369a1',
+      'patrimonio': '#065f46',
+      'tecnico': '#92400e',
+      'visualizador': '#6b21a8'
+    };
+    return { bg: colors[permissao] || '#f3f4f6', text: textColors[permissao] || '#374151' };
+  };
+
+  if (loading) return <div style={{ padding: '20px' }}>Carregando...</div>;
+  if (error) return <div style={{ padding: '20px', color: 'red' }}>{error}</div>;
 
   return (
-    <div style={pageStyle}>
-      <h1 style={titleStyle}>Gestão de Usuários</h1>
-      <button style={buttonStyle}>+ Adicionar Usuário</button>
+    <div style={{ padding: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+        <Shield size={28} />
+        <h1 style={{ margin: 0 }}>Usuários</h1>
+      </div>
 
-      {loading && <div style={loadingStyle}>Carregando usuários...</div>}
-      {error && <div style={{ ...emptyMessageStyle, color: '#dc3545' }}>{error}</div>}
-      {!loading && !error && usuarios.length === 0 && (
-        <div style={emptyMessageStyle}>Nenhum usuário cadastrado</div>
-      )}
-
-      {!loading && !error && usuarios.length > 0 && (
-        <table style={tableStyle}>
+      {usuarios.length === 0 ? (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+          Nenhum usuário cadastrado
+        </div>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>
-              <th style={thStyle}>ID</th>
-              <th style={thStyle}>Nome de Usuário</th>
-              <th style={thStyle}>Email</th>
-              <th style={thStyle}>Permissão</th>
-              <th style={thStyle}>Ações</th>
+            <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Nome de Usuário</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Permissão</th>
             </tr>
           </thead>
           <tbody>
-            {usuarios.map((usuario) => (
-              <tr key={usuario.id}>
-                <td style={tdStyle}>{usuario.id}</td>
-                <td style={tdStyle}>{usuario.nome_usuario}</td>
-                <td style={tdStyle}>{usuario.email}</td>
-                <td style={tdStyle}>
-                  <span style={permissionBadgeStyle(usuario.permissao)}>{usuario.permissao}</span>
-                </td>
-                <td style={tdStyle}>
-                  <button style={{ ...buttonStyle, background: '#28a745', marginRight: '5px' }}>Editar</button>
-                  <button style={{ ...buttonStyle, background: '#dc3545' }}>Deletar</button>
-                </td>
-              </tr>
-            ))}
+            {usuarios.map((usuario) => {
+              const permColor = getPermissionColor(usuario.permissao);
+              return (
+                <tr key={usuario.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <td style={{ padding: '12px' }}>{usuario.nome_usuario}</td>
+                  <td style={{ padding: '12px' }}>{usuario.email || '-'}</td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{
+                      padding: '6px 12px',
+                      backgroundColor: permColor.bg,
+                      color: permColor.text,
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}>
+                      {usuario.permissao}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
     </div>
-  )
+  );
 }
-
-export default Usuarios
-
