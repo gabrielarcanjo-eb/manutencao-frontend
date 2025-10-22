@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, Plus } from 'lucide-react';
+import { Edit2, Plus } from 'lucide-react';
 
 export default function OrdensServico() {
   const [ordens, setOrdens] = useState([]);
+  const [equipamentos, setEquipamentos] = useState([]); // Novo estado para equipamentos
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -17,6 +18,7 @@ export default function OrdensServico() {
 
   useEffect(() => {
     fetchOrdens();
+    fetchEquipamentos(); // Buscar equipamentos ao carregar a página
   }, []);
 
   const fetchOrdens = async () => {
@@ -41,8 +43,30 @@ export default function OrdensServico() {
     }
   };
 
+  const fetchEquipamentos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/equipamentos`, {
+        headers: {
+          'x-access-token': token
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEquipamentos(data.equipamentos || []);
+      } else {
+        console.error('Erro ao buscar equipamentos');
+      }
+    } catch (err) {
+      console.error('Erro ao buscar equipamentos:', err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Garante que equipamento_id seja um número antes de enviar
+    const payload = { ...formData, equipamento_id: parseInt(formData.equipamento_id) };
+    
     try {
       const token = localStorage.getItem('token');
       const method = editingId ? 'PUT' : 'POST';
@@ -56,7 +80,7 @@ export default function OrdensServico() {
           'Content-Type': 'application/json',
           'x-access-token': token
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -70,9 +94,14 @@ export default function OrdensServico() {
           status: 'aberta'
         });
         fetchOrdens();
+      } else {
+        const errorData = await response.json();
+        console.error('Erro ao salvar ordem de serviço:', errorData);
+        alert(`Erro ao salvar ordem de serviço: ${errorData.message || response.statusText}`);
       }
     } catch (err) {
       console.error('Erro:', err);
+      alert('Erro ao conectar ao servidor ou processar a requisição.');
     }
   };
 
@@ -90,6 +119,11 @@ export default function OrdensServico() {
       'cancelada': '#991b1b'
     };
     return { bg: colors[status] || '#f3f4f6', text: textColors[status] || '#374151' };
+  };
+
+  const getEquipamentoNome = (id) => {
+    const eq = equipamentos.find(e => e.id === id);
+    return eq ? eq.nome : 'Desconhecido';
   };
 
   if (loading) return <div style={{ padding: '20px' }}>Carregando...</div>;
@@ -135,6 +169,7 @@ export default function OrdensServico() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ backgroundColor: '#f3f4f6', borderBottom: '2px solid #e5e7eb' }}>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Equipamento</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Setor</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Descrição</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Tipo</th>
@@ -148,6 +183,7 @@ export default function OrdensServico() {
               const statusColor = getStatusColor(ordem.status);
               return (
                 <tr key={ordem.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <td style={{ padding: '12px' }}>{getEquipamentoNome(ordem.equipamento_id)}</td>
                   <td style={{ padding: '12px' }}>{ordem.setor}</td>
                   <td style={{ padding: '12px' }}>{ordem.descricao_problema.substring(0, 50)}...</td>
                   <td style={{ padding: '12px' }}>
@@ -233,6 +269,26 @@ export default function OrdensServico() {
           }}>
             <h2>{editingId ? 'Editar Ordem' : 'Nova Ordem de Serviço'}</h2>
             <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Equipamento</label>
+                <select
+                  value={formData.equipamento_id}
+                  onChange={(e) => setFormData({ ...formData, equipamento_id: e.target.value })}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="">Selecione um equipamento</option>
+                  {equipamentos.map(eq => (
+                    <option key={eq.id} value={eq.id}>{eq.nome} ({eq.numero_identificacao})</option>
+                  ))}
+                </select>
+              </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Setor</label>
                 <input
@@ -338,3 +394,4 @@ export default function OrdensServico() {
     </div>
   );
 }
+
