@@ -3,6 +3,16 @@ import { Edit2, Trash2, Plus } from 'lucide-react';
 
 export default function Equipamentos() {
   const [equipamentos, setEquipamentos] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -117,7 +127,7 @@ export default function Equipamentos() {
   return (
     <div style={{ padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Equipamentos</h1>
+        <h1 style={{ fontSize: isMobile ? '1.5rem' : '2.25rem' }}>Equipamentos</h1>
         <button
           onClick={() => {
             setEditingId(null);

@@ -3,6 +3,16 @@ import { Edit2, Plus } from 'lucide-react';
 
 export default function OrdensServico() {
   const [ordens, setOrdens] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [equipamentos, setEquipamentos] = useState([]); // Novo estado para equipamentos
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -132,7 +142,7 @@ export default function OrdensServico() {
   return (
     <div style={{ padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Ordens de Serviço</h1>
+        <h1 style={{ fontSize: isMobile ? '1.5rem' : '2.25rem' }}>Ordens de Serviço</h1>
         <button
           onClick={() => {
             setEditingId(null);

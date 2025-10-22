@@ -3,6 +3,33 @@ import { Edit2, Trash2, Plus } from 'lucide-react';
 
 export default function Fornecedores() {
   const [fornecedores, setFornecedores] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const formatPhoneNumber = (value) => {
+    if (!value) return "";
+    value = value.replace(/\D/g, "");
+    if (value.length > 11) value = value.substring(0, 11);
+
+    if (value.length <= 2) {
+      return `(${value}`;
+    } else if (value.length <= 7) {
+      return `(${value.substring(0, 2)}) ${value.substring(2)}`;
+    } else if (value.length <= 10) {
+      return `(${value.substring(0, 2)}) ${value.substring(2, 6)}-${value.substring(6)}`;
+    } else {
+      return `(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}`;
+    }
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -106,7 +133,7 @@ export default function Fornecedores() {
   return (
     <div style={{ padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Fornecedores</h1>
+        <h1 style={{ fontSize: isMobile ? '1.5rem' : '2.25rem' }}>Fornecedores</h1>
         <button
           onClick={() => {
             setEditingId(null);
@@ -249,8 +276,8 @@ export default function Fornecedores() {
                 <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Telefone</label>
                 <input
                   type="tel"
-                  value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                  value={formatPhoneNumber(formData.telefone)}
+                  onChange={(e) => setFormData({ ...formData, telefone: formatPhoneNumber(e.target.value) })}
                   style={{
                     width: '100%',
                     padding: '8px',
