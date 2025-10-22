@@ -1,8 +1,14 @@
 import { useState } from 'react'
+import Sidebar from '../components/Sidebar'
+import Equipamentos from './Equipamentos'
+import OrdensServico from './OrdensServico'
+import Fornecedores from './Fornecedores'
+import Usuarios from './Usuarios'
 
 const dashboardContainerStyle = {
   minHeight: '100vh',
   background: '#f5f5f5',
+  display: 'flex',
 }
 
 const headerStyle = {
@@ -61,7 +67,15 @@ const permissionStyle = {
   marginBottom: '20px',
 }
 
+const mainContentStyle = {
+  marginLeft: '250px',
+  minHeight: '100vh',
+  background: '#f5f5f5',
+  flex: 1,
+}
+
 function Dashboard({ onLogout, userPermission }) {
+  const [currentPage, setCurrentPage] = useState('dashboard')
   const [loading, setLoading] = useState(false)
 
   const handleLogout = () => {
@@ -71,45 +85,37 @@ function Dashboard({ onLogout, userPermission }) {
     }, 500)
   }
 
+  const handleNavigate = (page) => {
+    setCurrentPage(page)
+  }
+
   return (
     <div style={dashboardContainerStyle}>
-      <header style={headerStyle}>
-        <h1 style={titleStyle}>Dashboard</h1>
-        <button style={logoutButtonStyle} onClick={handleLogout} disabled={loading}>
-          {loading ? 'Saindo...' : 'Sair'}
-        </button>
-      </header>
+      <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
+      <div style={mainContentStyle}>
+        <header style={headerStyle}>
+          <h1 style={titleStyle}>Sistema de Gestão</h1>
+          <button style={logoutButtonStyle} onClick={handleLogout} disabled={loading}>
+            {loading ? 'Saindo...' : 'Sair'}
+          </button>
+        </header>
 
-      <div style={contentStyle}>
-        <div style={permissionStyle}>
-          <strong>Sua Permissão:</strong> {userPermission || 'Não definida'}
-        </div>
-
-        <div style={cardStyle}>
-          <h2 style={cardTitleStyle}>Bem-vindo ao Sistema</h2>
-          <p>Este é o dashboard principal do sistema de gestão de clínica de ortopedia.</p>
-        </div>
-
-        {userPermission === 'admin' && (
-          <div style={cardStyle}>
-            <h2 style={cardTitleStyle}>Área Administrativa</h2>
-            <p>Você tem acesso a todas as funcionalidades do sistema.</p>
+        {currentPage === 'dashboard' && (
+          <div style={contentStyle}>
+            <div style={permissionStyle}>
+              <strong>Sua Permissão:</strong> {userPermission || 'Não definida'}
+            </div>
+            <div style={cardStyle}>
+              <h2 style={cardTitleStyle}>Bem-vindo ao Sistema</h2>
+              <p>Este é o dashboard principal do sistema de gestão de clínica de ortopedia.</p>
+            </div>
           </div>
         )}
 
-        {(userPermission === 'admin' || userPermission === 'patrimonio') && (
-          <div style={cardStyle}>
-            <h2 style={cardTitleStyle}>Gestão de Patrimônio</h2>
-            <p>Você pode gerenciar os documentos e equipamentos da clínica.</p>
-          </div>
-        )}
-
-        {(userPermission === 'admin' || userPermission === 'tecnico') && (
-          <div style={cardStyle}>
-            <h2 style={cardTitleStyle}>Ordens de Serviço</h2>
-            <p>Você pode visualizar e gerenciar as ordens de serviço.</p>
-          </div>
-        )}
+        {currentPage === 'equipamentos' && <Equipamentos token={localStorage.getItem('token')} />}
+        {currentPage === 'ordens-servico' && <OrdensServico token={localStorage.getItem('token')} />}
+        {currentPage === 'fornecedores' && <Fornecedores token={localStorage.getItem('token')} />}
+        {currentPage === 'usuarios' && <Usuarios token={localStorage.getItem('token')} />}
       </div>
     </div>
   )
