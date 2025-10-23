@@ -47,7 +47,8 @@ function App() {
     setUserPermission(null)
     localStorage.removeItem('token')
     localStorage.removeItem('userPermission')
-    window.location.href = '/login' // Redireciona para a página de login após o logout
+    // Força uma navegação completa para a página de login para garantir a limpeza do estado
+    window.location.replace('/login')
   }
 
   return (
