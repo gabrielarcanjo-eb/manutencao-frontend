@@ -47,7 +47,7 @@ function App() {
     setUserPermission(null)
     localStorage.removeItem('token')
     localStorage.removeItem('userPermission')
-    window.location.replace('/login') // Redireciona para a página de login após o logout
+    window.location.replace("https://manutencao-frontend.vercel.app/login") // Redireciona para a página de login após o logout
   }
 
   return (
