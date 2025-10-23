@@ -47,13 +47,14 @@ function App() {
     setUserPermission(null)
     localStorage.removeItem('token')
     localStorage.removeItem('userPermission')
+    window.location.href = '/login' // Redireciona para a página de login após o logout
   }
 
   return (
     <Router>
       <Routes>
         <Route path="/login" element={!token ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
-        <Route path="/dashboard" element={token ? <Dashboard onLogout={handleLogout} userPermission={userPermission} /> : <Navigate to="/login" />} />
+        <Route path="/dashboard" element={token ? <Dashboard onLogout={handleLogout} userPermission={userPermission} /> : <Navigate to="/login" replace />} />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
