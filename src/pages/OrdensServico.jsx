@@ -23,13 +23,36 @@ export default function OrdensServico() {
     setor: '',
     descricao_problema: '',
     tipo_manutencao: 'corretiva',
-    status: 'aberta'
+    status: 'aberta',
+    responsavel_tecnico: '',
+    prazo_resolucao: ''
   });
+  const [dashboardData, setDashboardData] = useState(null);
 
   useEffect(() => {
     fetchOrdens();
     fetchEquipamentos(); // Buscar equipamentos ao carregar a página
+    fetchDashboardData(); // Buscar dados do dashboard
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ordens-servico/dashboard`, {
+        headers: {
+          'x-access-token': token
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardData(data);
+      } else {
+        console.error('Erro ao buscar dados do dashboard');
+      }
+    } catch (err) {
+      console.error('Erro ao conectar ao servidor para dashboard:', err);
+    }
+  };
 
   const fetchOrdens = async () => {
     try {
@@ -75,7 +98,11 @@ export default function OrdensServico() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Garante que equipamento_id seja um número antes de enviar
-    const payload = { ...formData, equipamento_id: parseInt(formData.equipamento_id) };
+    const payload = { 
+      ...formData, 
+      equipamento_id: parseInt(formData.equipamento_id),
+      prazo_resolucao: formData.prazo_resolucao || null // Garante que seja null se vazio
+    };
     
     try {
       const token = localStorage.getItem('token');
@@ -101,7 +128,9 @@ export default function OrdensServico() {
           setor: '',
           descricao_problema: '',
           tipo_manutencao: 'corretiva',
-          status: 'aberta'
+          status: 'aberta',
+          responsavel_tecnico: '',
+          prazo_resolucao: ''
         });
         fetchOrdens();
       } else {
@@ -142,6 +171,31 @@ export default function OrdensServico() {
   return (
     <div style={{ padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 style={{ fontSize: isMobile ? '1.5rem' : '2.25rem' }}>Dashboard de Ordens de Serviço</h1>
+      </div>
+
+      {dashboardData && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+            <h3>Ordens Abertas</h3>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{dashboardData.ordens_abertas}</p>
+          </div>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+            <h3>Ordens Fechadas</h3>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{dashboardData.ordens_fechadas}</p>
+          </div>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+            <h3>Ordens Atrasadas</h3>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{dashboardData.ordens_atrasadas}</p>
+          </div>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+            <h3>Tempo Médio de Fechamento (dias)</h3>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{dashboardData.tempo_medio_fechamento.toFixed(2)}</p>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ fontSize: isMobile ? '1.5rem' : '2.25rem' }}>Ordens de Serviço</h1>
         <button
           onClick={() => {
@@ -151,7 +205,9 @@ export default function OrdensServico() {
               setor: '',
               descricao_problema: '',
               tipo_manutencao: 'corretiva',
-              status: 'aberta'
+              status: 'aberta',
+              responsavel_tecnico: '',
+              prazo_resolucao: ''
             });
             setShowModal(true);
           }}
@@ -184,6 +240,8 @@ export default function OrdensServico() {
               <th style={{ padding: '12px', textAlign: 'left' }}>Descrição</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Tipo</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Status</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Responsável Técnico</th>
+              <th style={{ padding: '12px', textAlign: 'left' }}>Prazo Resolução</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Data Abertura</th>
               <th style={{ padding: '12px', textAlign: 'center' }}>Ações</th>
             </tr>
@@ -196,6 +254,8 @@ export default function OrdensServico() {
                   <td style={{ padding: '12px' }}>{getEquipamentoNome(ordem.equipamento_id)}</td>
                   <td style={{ padding: '12px' }}>{ordem.setor}</td>
                   <td style={{ padding: '12px' }}>{ordem.descricao_problema.substring(0, 50)}...</td>
+                  <td style={{ padding: '12px' }}>{ordem.responsavel_tecnico || 'N/A'}</td>
+                  <td style={{ padding: '12px' }}>{ordem.prazo_resolucao ? new Date(ordem.prazo_resolucao).toLocaleDateString('pt-BR') : 'N/A'}</td>
                   <td style={{ padding: '12px' }}>
                     <span style={{
                       padding: '4px 8px',
@@ -228,7 +288,9 @@ export default function OrdensServico() {
                           setor: ordem.setor,
                           descricao_problema: ordem.descricao_problema,
                           tipo_manutencao: ordem.tipo_manutencao,
-                          status: ordem.status
+                          status: ordem.status,
+                          responsavel_tecnico: ordem.responsavel_tecnico || '',
+                          prazo_resolucao: ordem.prazo_resolucao ? new Date(ordem.prazo_resolucao).toISOString().split('T')[0] : ''
                         });
                         setShowModal(true);
                       }}
@@ -348,6 +410,36 @@ export default function OrdensServico() {
                   <option value="corretiva">Corretiva</option>
                   <option value="programada">Programada</option>
                 </select>
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Responsável Técnico</label>
+                <input
+                  type="text"
+                  value={formData.responsavel_tecnico}
+                  onChange={(e) => setFormData({ ...formData, responsavel_tecnico: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Prazo para Resolução</label>
+                <input
+                  type="date"
+                  value={formData.prazo_resolucao}
+                  onChange={(e) => setFormData({ ...formData, prazo_resolucao: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Status</label>

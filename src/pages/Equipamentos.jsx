@@ -23,12 +23,35 @@ export default function Equipamentos() {
     valor_compra: '',
     data_compra: '',
     tipo_posse: 'proprio',
-    numero_identificacao: ''
+    numero_identificacao: '',
+    status_operacional: 'Operacional',
+    tipo_equipamento: '',
+    vida_util_anos: ''
   });
+  const [dashboardData, setDashboardData] = useState(null);
 
   useEffect(() => {
     fetchEquipamentos();
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/equipamentos/dashboard`, {
+        headers: {
+          'x-access-token': token
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardData(data);
+      } else {
+        console.error('Erro ao buscar dados do dashboard');
+      }
+    } catch (err) {
+      console.error('Erro ao conectar ao servidor para dashboard:', err);
+    }
+  };
 
   const fetchEquipamentos = async () => {
     try {
@@ -42,6 +65,7 @@ export default function Equipamentos() {
       if (response.ok) {
         const data = await response.json();
         setEquipamentos(data.equipamentos || []);
+        fetchDashboardData(); // Buscar dados do dashboard após carregar equipamentos
       } else {
         setError('Erro ao conectar ao servidor');
       }
@@ -74,13 +98,16 @@ export default function Equipamentos() {
         setShowModal(false);
         setEditingId(null);
         setFormData({
-          nome: '',
-          marca: '',
-          valor_compra: '',
-          data_compra: '',
-          tipo_posse: 'proprio',
-          numero_identificacao: ''
-        });
+              nome: '',
+              marca: '',
+              valor_compra: '',
+              data_compra: '',
+              tipo_posse: 'proprio',
+              numero_identificacao: '',
+              status_operacional: 'Operacional',
+              tipo_equipamento: '',
+              vida_util_anos: ''
+            });
         fetchEquipamentos();
       }
     } catch (err) {
@@ -116,7 +143,10 @@ export default function Equipamentos() {
       valor_compra: equipamento.valor_compra,
       data_compra: equipamento.data_compra,
       tipo_posse: equipamento.tipo_posse,
-      numero_identificacao: equipamento.numero_identificacao
+      numero_identificacao: equipamento.numero_identificacao,
+      status_operacional: equipamento.status_operacional,
+      tipo_equipamento: equipamento.tipo_equipamento,
+      vida_util_anos: equipamento.vida_util_anos
     });
     setShowModal(true);
   };
@@ -126,6 +156,27 @@ export default function Equipamentos() {
 
   return (
     <div style={{ padding: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 style={{ fontSize: isMobile ? '1.5rem' : '2.25rem' }}>Dashboard de Equipamentos</h1>
+      </div>
+
+      {dashboardData && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+            <h3>Equipamentos Ativos</h3>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{dashboardData.equipamentos_ativos}</p>
+          </div>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+            <h3>Equipamentos Parados</h3>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{dashboardData.equipamentos_parados}</p>
+          </div>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+            <h3>Manutenções Preventivas Próximas</h3>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{dashboardData.manutencoes_preventivas_proximas}</p>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ fontSize: isMobile ? '1.5rem' : '2.25rem' }}>Equipamentos</h1>
         <button
@@ -137,7 +188,10 @@ export default function Equipamentos() {
               valor_compra: '',
               data_compra: '',
               tipo_posse: 'proprio',
-              numero_identificacao: ''
+              numero_identificacao: '',
+              status_operacional: 'Operacional',
+              tipo_equipamento: '',
+              vida_util_anos: ''
             });
             setShowModal(true);
           }}
@@ -345,6 +399,59 @@ export default function Equipamentos() {
                   value={formData.numero_identificacao}
                   onChange={(e) => setFormData({ ...formData, numero_identificacao: e.target.value })}
                   required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Status Operacional</label>
+                <select
+                  value={formData.status_operacional}
+                  onChange={(e) => setFormData({ ...formData, status_operacional: e.target.value })}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="Operacional">Operacional</option>
+                  <option value="Em Manutenção Corretiva">Em Manutenção Corretiva</option>
+                  <option value="Em Manutenção Preventiva">Em Manutenção Preventiva</option>
+                  <option value="Em Calibração">Em Calibração</option>
+                  <option value="Fora de Operação/Backup">Fora de Operação/Backup</option>
+                  <option value="Descartado/Baixado">Descartado/Baixado</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Tipo de Equipamento</label>
+                <input
+                  type="text"
+                  value={formData.tipo_equipamento}
+                  onChange={(e) => setFormData({ ...formData, tipo_equipamento: e.target.value })}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Vida Útil (Anos)</label>
+                <input
+                  type="number"
+                  value={formData.vida_util_anos}
+                  onChange={(e) => setFormData({ ...formData, vida_util_anos: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '8px',
