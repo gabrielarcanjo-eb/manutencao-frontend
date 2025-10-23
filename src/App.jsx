@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
 import Login from './pages/Login'
@@ -7,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 function App() {
+  const navigate = useNavigate()
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [userPermission, setUserPermission] = useState(() => {
     const storedPermission = localStorage.getItem('userPermission')
@@ -43,12 +45,13 @@ function App() {
   }
 
   const handleLogout = () => {
+    // Limpa o token e a permissão do localStorage e do estado local
+    localStorage.removeItem("token")
+    localStorage.removeItem("userPermission")
     setToken(null)
     setUserPermission(null)
-    localStorage.removeItem('token')
-    localStorage.removeItem('userPermission')
-    // Força uma navegação completa para a página de login para garantir a limpeza do estado
-    window.location.replace('/login')
+    // Redireciona para a página de login usando useNavigate
+    navigate('/login', { replace: true })
   }
 
   return (
