@@ -37,7 +37,7 @@ export default function Equipamentos() {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/equipamentos/dashboard`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL_BACKEND}/equipamentos/dashboard`, {
         headers: {
           'x-access-token': token
         }
@@ -57,7 +57,7 @@ export default function Equipamentos() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/equipamentos`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL_BACKEND}/equipamentos`, {
         headers: {
           'x-access-token': token
         }
@@ -82,8 +82,8 @@ export default function Equipamentos() {
       const token = localStorage.getItem('token');
       const method = editingId ? 'PUT' : 'POST';
       const url = editingId 
-        ? `${import.meta.env.VITE_API_URL}/equipamentos/${editingId}`
-        : `${import.meta.env.VITE_API_URL}/equipamentos`;
+        ? `${import.meta.env.VITE_API_URL_BACKEND}/equipamentos/${editingId}
+        : `${import.meta.env.VITE_API_URL_BACKEND}/equipamentos`;
 
       const response = await fetch(url, {
         method,
@@ -119,7 +119,7 @@ export default function Equipamentos() {
     if (window.confirm('Tem certeza que deseja deletar este equipamento?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/equipamentos/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL_BACKEND}/equipamentos/${id}`, {
           method: 'DELETE',
           headers: {
             'x-access-token': token

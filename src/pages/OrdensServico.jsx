@@ -38,7 +38,7 @@ export default function OrdensServico() {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/ordens-servico/dashboard`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL_BACKEND}/ordens-servico/dashboard`, {
         headers: {
           'x-access-token': token
         }
@@ -58,7 +58,7 @@ export default function OrdensServico() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/ordens-servico`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL_BACKEND}/ordens-servico`, {
         headers: {
           'x-access-token': token
         }
@@ -79,7 +79,7 @@ export default function OrdensServico() {
   const fetchEquipamentos = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/equipamentos`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL_BACKEND}/equipamentos`, {
         headers: {
           'x-access-token': token
         }
@@ -108,8 +108,8 @@ export default function OrdensServico() {
       const token = localStorage.getItem('token');
       const method = editingId ? 'PUT' : 'POST';
       const url = editingId 
-        ? `${import.meta.env.VITE_API_URL}/ordens-servico/${editingId}`
-        : `${import.meta.env.VITE_API_URL}/ordens-servico`;
+        ? `${import.meta.env.VITE_API_URL_BACKEND}/ordens-servico/${editingId}`
+        : `${import.meta.env.VITE_API_URL_BACKEND}/ordens-servico`;
 
       const response = await fetch(url, {
         method,
