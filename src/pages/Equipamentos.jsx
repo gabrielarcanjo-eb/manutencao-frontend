@@ -82,7 +82,7 @@ export default function Equipamentos() {
       const token = localStorage.getItem('token');
       const method = editingId ? 'PUT' : 'POST';
       const url = editingId 
-        ? `${import.meta.env.VITE_API_URL_BACKEND}/equipamentos/${editingId}
+        ? `${import.meta.env.VITE_API_URL_BACKEND}/equipamentos/${editingId}`
         : `${import.meta.env.VITE_API_URL_BACKEND}/equipamentos`;
 
       const response = await fetch(url, {
